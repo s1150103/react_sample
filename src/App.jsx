@@ -1,18 +1,68 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  // TODOアプリの状態管理
-  const [todos, setTodos] = useState([
-    { id: 1, text: 'Reactの基礎を学ぶ', completed: false },
-    { id: 2, text: 'TODOアプリを作る', completed: false },
-    { id: 3, text: 'useStateを理解する', completed: true }
-  ])
+  // TODOアプリの状態管理（ローカルストレージから初期データを読み込み）
+  const [todos, setTodos] = useState(() => {
+    // ローカルストレージからデータを取得
+    const savedTodos = localStorage.getItem('react-todos')
+    if (savedTodos) {
+      // JSON形式で保存されたデータを復元
+      return JSON.parse(savedTodos)
+    }
+    // ローカルストレージにデータがない場合のデフォルトデータ
+    return [
+      { id: 1, text: 'Reactの基礎を学ぶ', completed: false },
+      { id: 2, text: 'TODOアプリを作る', completed: false },
+      { id: 3, text: 'useStateを理解する', completed: true }
+    ]
+  })
 
   const [inputText, setInputText] = useState('')
   const [filter, setFilter] = useState('all')
+
+  // ローカルストレージへの保存（todosが変更されるたびに実行）
+  useEffect(() => {
+    // todosをJSON形式でローカルストレージに保存
+    localStorage.setItem('react-todos', JSON.stringify(todos))
+  }, [todos]) // 依存配列：todosが変更された時のみ実行
+
+  // タスク追加機能
+  const addTodo = () => {
+    // 入力値が空の場合は何もしない
+    if (inputText.trim() === '') return
+
+    // 新しいタスクオブジェクトを作成
+    const newTodo = {
+      id: Date.now(), // 現在時刻をIDとして使用（簡易的な一意ID）
+      text: inputText.trim(), // 前後の空白を削除
+      completed: false // 新しいタスクは未完了
+    }
+
+    // 既存のタスクリストに新しいタスクを追加
+    setTodos([...todos, newTodo])
+
+    // 入力フィールドをクリア
+    setInputText('')
+  }
+
+  // タスク削除機能
+  const deleteTodo = (id) => {
+    // 指定されたIDのタスクを除外した新しい配列を作成
+    setTodos(todos.filter(todo => todo.id !== id))
+  }
+
+  // タスク完了切り替え機能
+  const toggleTodo = (id) => {
+    // 指定されたIDのタスクの完了状態を切り替える
+    setTodos(todos.map(todo =>
+      todo.id === id
+        ? { ...todo, completed: !todo.completed } // IDが一致する場合、完了状態を反転
+        : todo // IDが一致しない場合、そのまま
+    ))
+  }
 
   return (
     <>
@@ -35,14 +85,27 @@ function App() {
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              // Enterキーが押された時にタスクを追加
+              if (e.key === 'Enter') {
+                addTodo()
+              }
+            }}
             placeholder="新しいタスクを入力..."
             style={{flex: 1, padding: '8px', fontSize: '16px'}}
           />
           <button
-            onClick={() => {
-              console.log('タスク追加:', inputText)
+            onClick={addTodo}
+            disabled={inputText.trim() === ''} // 入力が空の時はボタンを無効化
+            style={{
+              padding: '8px 16px',
+              fontSize: '16px',
+              backgroundColor: inputText.trim() === '' ? '#ccc' : '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: inputText.trim() === '' ? 'not-allowed' : 'pointer'
             }}
-            style={{padding: '8px 16px', fontSize: '16px'}}
           >
             追加
           </button>
@@ -118,9 +181,7 @@ function App() {
                 <input
                   type="checkbox"
                   checked={todo.completed}
-                  onChange={() => {
-                    console.log('完了切り替え:', todo.id)
-                  }}
+                  onChange={() => toggleTodo(todo.id)}
                   style={{marginRight: '8px'}}
                 />
                 <span
@@ -133,16 +194,15 @@ function App() {
                   {todo.text}
                 </span>
                 <button
-                  onClick={() => {
-                    console.log('削除:', todo.id)
-                  }}
+                  onClick={() => deleteTodo(todo.id)}
                   style={{
                     backgroundColor: '#dc3545',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
                     padding: '4px 8px',
-                    fontSize: '12px'
+                    fontSize: '12px',
+                    cursor: 'pointer'
                   }}
                 >
                   削除

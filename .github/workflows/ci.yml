@@ -17,6 +17,12 @@ jobs:
     # リポジトリのチェックアウト
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # 最新コードを強制取得
+    - name: Force pull latest
+      run: git pull origin main
 
     # Node.js環境のセットアップ
     - name: Setup Node.js

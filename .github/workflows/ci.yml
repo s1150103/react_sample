@@ -24,13 +24,12 @@ jobs:
       with:
         node-version: '22'
 
-    # npmキャッシュをクリア
-    - name: Clear npm cache
-      run: npm cache clean --force
-
-    # 依存関係のインストール
-    - name: Install dependencies
-      run: npm ci
+    # 完全なクリーンインストール
+    - name: Clean install
+      run: |
+        rm -rf node_modules package-lock.json
+        npm cache clean --force
+        npm install
 
     # ESLintによるコード品質チェック
     - name: Run ESLint

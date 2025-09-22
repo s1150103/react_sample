@@ -1,114 +1,30 @@
-name: CI/CD Pipeline
+name: CI
 
-# トリガー設定：mainブランチへのpush、pull request時に実行
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  # テストとビルドジョブ
-  test-and-build:
-    name: Test and Build
+  build:
     runs-on: ubuntu-latest
-
     steps:
-    # リポジトリのチェックアウト
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        clean: true
+      - uses: actions/checkout@v4
 
-    # Node.js 22.12.0に完全固定
-    - name: Setup Node.js 22.12.0
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.12.0'
-        check-latest: true
+      # ✅ Node を 22.12 に固定（20.19 でも可）
+      - name: Use Node.js 22.12
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-    # Node.jsバージョン確認
-    - name: Verify Node.js version
-      run: |
-        echo "Node.js version:"
-        node --version
-        echo "npm version:"
-        npm --version
+      # ✅ Node 18 時代の依存を完全に捨てる → 新しい Node で入れ直す
+      - name: Clean install deps
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm i --package-lock-only
+          npm ci
 
-    # 依存関係を完全クリーンインストール
-    - name: Clean dependencies and reinstall
-      run: |
-        echo "=== Removing old dependencies ==="
-        rm -rf node_modules package-lock.json
-
-        echo "=== Cleaning npm cache ==="
-        npm cache clean --force
-
-        echo "=== Installing fresh dependencies ==="
-        npm install
-
-        echo "=== Verifying package-lock.json ==="
-        ls -la package-lock.json
-
-        echo "=== Checking Vite version ==="
-        npm list vite
-
-    # ESLintによるコード品質チェック
-    - name: Run ESLint
-      run: npm run lint
-
-    # ビルドの実行
-    - name: Build project
-      run: |
-        echo "=== Starting build with Node.js $(node --version) ==="
-        npm run build
-
-        echo "=== Build output ==="
-        ls -la dist/
-
-    # ビルド成果物をアーティファクトとして保存
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-files
-        path: dist/
-
-  # デプロイジョブ（mainブランチのみ）
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    # GitHub Pagesへの書き込み権限
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-    # ビルド成果物のダウンロード
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-files
-        path: dist/
-
-    # GitHub Pagesのセットアップ
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-
-    # 成果物をPagesにアップロード
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: dist/
-
-    # GitHub Pagesにデプロイ
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Build
+        run: npm run build

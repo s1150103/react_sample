@@ -60,8 +60,8 @@ describe('App Component', () => {
     localStorageMock.getItem.mockReturnValue(null)
     render(<App />)
 
-    // 完了済みフィルターをクリック
-    const completedButton = screen.getByText(/完了済み/)
+    // 完了済みフィルターボタンを特定してクリック
+    const completedButton = screen.getByRole('button', { name: /完了済み/ })
     fireEvent.click(completedButton)
 
     // 完了済みタスクのみ表示されるはず

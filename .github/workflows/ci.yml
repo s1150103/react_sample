@@ -20,9 +20,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 最新コードを強制取得
-    - name: Force pull latest
-      run: git pull origin main
+    # vite.config.jsのprocess.env問題を修正
+    - name: Fix vite.config.js
+      run: |
+        sed -i "s/process.env.NODE_ENV === 'production' ? '\/react_sample\/' : '\/'/'\/react_sample\/'/g" vite.config.js
+        cat vite.config.js
 
     # Node.js環境のセットアップ
     - name: Setup Node.js

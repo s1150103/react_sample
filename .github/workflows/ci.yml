@@ -18,40 +18,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        clean: true
 
-    # vite.config.jsを完全に置き換え
-    - name: Fix vite.config.js
-      run: |
-        cat > vite.config.js << 'EOF'
-        import { defineConfig } from 'vite'
-        import react from '@vitejs/plugin-react'
-
-        // https://vite.dev/config/
-        export default defineConfig({
-          plugins: [react()],
-          base: '/react_sample/',
-          build: {
-            outDir: 'dist',
-            assetsDir: 'assets'
-          }
-        })
-        EOF
-        echo "=== vite.config.js content ==="
-        cat vite.config.js
-
-    # Node.js環境のセットアップ
-    - name: Setup Node.js
+    # Node.js 22.12.0に完全固定
+    - name: Setup Node.js 22.12.0
       uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version: '22.12.0'
+        check-latest: true
 
-    # 完全なクリーンインストール
-    - name: Clean install
+    # Node.jsバージョン確認
+    - name: Verify Node.js version
       run: |
+        echo "Node.js version:"
+        node --version
+        echo "npm version:"
+        npm --version
+
+    # 依存関係を完全クリーンインストール
+    - name: Clean dependencies and reinstall
+      run: |
+        echo "=== Removing old dependencies ==="
         rm -rf node_modules package-lock.json
+
+        echo "=== Cleaning npm cache ==="
         npm cache clean --force
+
+        echo "=== Installing fresh dependencies ==="
         npm install
+
+        echo "=== Verifying package-lock.json ==="
+        ls -la package-lock.json
+
+        echo "=== Checking Vite version ==="
+        npm list vite
 
     # ESLintによるコード品質チェック
     - name: Run ESLint
@@ -59,7 +59,12 @@ jobs:
 
     # ビルドの実行
     - name: Build project
-      run: npm run build
+      run: |
+        echo "=== Starting build with Node.js $(node --version) ==="
+        npm run build
+
+        echo "=== Build output ==="
+        ls -la dist/
 
     # ビルド成果物をアーティファクトとして保存
     - name: Upload build artifacts

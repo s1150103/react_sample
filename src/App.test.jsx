@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import App from './App'
 
 // ローカルストレージのモック
@@ -9,7 +9,7 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 }
-global.localStorage = localStorageMock
+globalThis.localStorage = localStorageMock
 
 describe('App Component', () => {
   beforeEach(() => {

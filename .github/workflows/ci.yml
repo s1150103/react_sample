@@ -23,7 +23,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        cache: 'npm'
+
+    # npmキャッシュをクリア
+    - name: Clear npm cache
+      run: npm cache clean --force
 
     # 依存関係のインストール
     - name: Install dependencies
